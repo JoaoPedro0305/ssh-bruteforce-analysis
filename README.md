@@ -1,5 +1,7 @@
 # SSH Brute-Force Analysis
 
+[![tests](https://github.com/JoaoPedro0305/ssh-bruteforce-analysis/actions/workflows/tests.yml/badge.svg)](https://github.com/JoaoPedro0305/ssh-bruteforce-analysis/actions/workflows/tests.yml)
+
 Analysis of 655k real SSH log lines from an internet-facing server: who tries to break in, with which usernames, from where, and how many attacks a `fail2ban` policy would have blocked.
 
 ## The problem
@@ -171,6 +173,7 @@ reports/       # policy results (CSV) and charts used in this README
 - **geoip2** – IP → country lookup (reads DB-IP's `.mmdb` format)
 - **Jupyter** – exploratory analysis
 - **pytest** – tests for parser, storage, geolocation and the simulation
+- **GitHub Actions** – runs the tests on every push, on Python 3.11, 3.12 and 3.13
 
 ## Limitations and next steps
 

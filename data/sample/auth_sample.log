@@ -1,0 +1,15 @@
+Oct  7 03:12:01 vm-ubuntu sshd[10231]: Invalid user admin from 203.0.113.45 port 51234
+Oct  7 03:12:03 vm-ubuntu sshd[10231]: Failed password for invalid user admin from 203.0.113.45 port 51234 ssh2
+Oct  7 03:12:05 vm-ubuntu sshd[10233]: Failed password for root from 203.0.113.45 port 51240 ssh2
+Oct  7 03:12:07 vm-ubuntu sshd[10235]: Failed password for root from 203.0.113.45 port 51246 ssh2
+Oct  7 03:12:09 vm-ubuntu sshd[10237]: Invalid user test from 203.0.113.45 port 51252
+Oct  7 03:12:10 vm-ubuntu sshd[10237]: Failed password for invalid user test from 203.0.113.45 port 51252 ssh2
+Oct  7 03:12:12 vm-ubuntu sshd[10239]: Failed password for root from 203.0.113.45 port 51258 ssh2
+Oct  7 03:12:14 vm-ubuntu sshd[10241]: Failed password for invalid user ubuntu from 203.0.113.45 port 51264 ssh2
+Oct  7 05:40:22 vm-ubuntu sshd[10512]: Invalid user oracle from 198.51.100.17 port 40022
+Oct  7 05:40:24 vm-ubuntu sshd[10512]: Failed password for invalid user oracle from 198.51.100.17 port 40022 ssh2
+Oct  7 05:41:30 vm-ubuntu sshd[10520]: Failed password for root from 198.51.100.17 port 40110 ssh2
+Oct  7 09:15:44 vm-ubuntu sshd[11002]: Accepted publickey for azureuser from 192.0.2.10 port 60001 ssh2: RSA SHA256:EXAMPLEFINGERPRINT
+Oct  7 14:02:11 vm-ubuntu sshd[11890]: Invalid user postgres from 203.0.113.88 port 33012
+Oct  7 14:02:13 vm-ubuntu sshd[11890]: Failed password for invalid user postgres from 203.0.113.88 port 33012 ssh2
+Oct  7 14:02:15 vm-ubuntu sshd[11890]: Connection closed by invalid user postgres 203.0.113.88 port 33012 [preauth]

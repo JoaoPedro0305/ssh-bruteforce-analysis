@@ -1,0 +1,30 @@
+# Real logs and derived data — never commit
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+*.log
+!data/sample/*.log
+auth.log*
+
+# GeoLite2 database (MaxMind license forbids redistribution)
+*.mmdb
+
+# Secrets
+.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

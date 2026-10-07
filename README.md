@@ -12,12 +12,10 @@ Any server with port 22 open to the internet receives automated login attempts w
 
 - **Source:** the OpenSSH dataset from [Loghub](https://github.com/logpai/loghub), 655,147 lines (~70 MiB) of `sshd` logs collected over ~28 days from a lab server exposed to the internet.
 - **Not committed:** the log is downloaded by `scripts/download_data.py` into `data/raw/`, which is git-ignored. Loghub asks users to link back to the original repository instead of redistributing the data.
-- **Geolocation:** [GeoLite2 Country](https://dev.maxmind.com/geoip/geolite2-free-geolocation-data) by MaxMind (free account required).
+- **Geolocation:** [IP to Country Lite](https://db-ip.com/db/download/ip-to-country-lite) by DB-IP (CC BY 4.0, no account needed), also downloaded by `scripts/download_data.py`.
 - `data/sample/auth_sample.log` is a small **synthetic** log (documentation IP ranges) used by the tests.
 
 ## Results
-
-<!-- TODO: fill in with real numbers after the analysis -->
 
 | Metric | Value |
 |---|---|
@@ -27,7 +25,7 @@ Any server with port 22 open to the internet receives automated login attempts w
 | Successful logins | 182 |
 | Source IPs with failed attempts | 1,010 |
 | Share of attempts from the top 10 IPs | 74.8% |
-| Countries | – |
+| Countries | 72 |
 | IPs flagged as brute force | – |
 | Attempts blocked by the simulated fail2ban policy | – |
 
@@ -35,7 +33,37 @@ Any server with port 22 open to the internet receives automated login attempts w
 
 Attacks are extremely concentrated: the single most active IP made 25% of all failed attempts (86k in 3 days), and the top 50 IPs made 95%. Blocking a handful of sources removes most of the noise, which is why tools like `fail2ban` work.
 
-<!-- TODO: charts — attempts per day, attempts per hour, top users, top countries -->
+Full analysis: [`notebooks/01_exploration.ipynb`](notebooks/01_exploration.ipynb).
+
+### Volume is bursty: Jan 1-4 produced 65% of all attempts
+
+![Failed attempts per day](reports/figures/attempts_per_day.png)
+
+The median online day had ~6k failed attempts. The hatched area is the period when the server was unreachable (see *Data quality notes*).
+
+### A few fast bots, not more attackers
+
+![Cumulative share of attempts by source IP](reports/figures/ip_concentration.png)
+
+The top 7 IPs tried **only `root`**, at 20-28 attempts per minute for 15-50 hours straight. Two IPs made exactly 10,852 attempts over 51 usernames, three weeks apart: almost certainly the same tool and wordlist.
+
+### There is no real peak hour
+
+![Failed attempts by hour of day](reports/figures/attempts_by_hour.png)
+
+Attempts per hour vary 2.5x, but the number of distinct attacking IPs per hour only varies between 82 and 128. The same population attacks all day; the "peaks" are a few heavy bots.
+
+### Usernames: root, then service accounts
+
+![Top targeted usernames besides root](reports/figures/top_usernames.png)
+
+94% of failed passwords target a username that exists on the server, mostly `root`. Disabling SSH root login would turn nearly all of them into guaranteed failures.
+
+### Countries: volume is not headcount
+
+![Attempts by country](reports/figures/top_countries.png)
+
+IPs registered in China are 316 of the 1,010 sources but 94% of the attempts; Vietnam has 71 IPs and under 1%. The country is where the infrastructure is registered, not where the attacker sits.
 
 ## How the parser works
 
@@ -74,6 +102,8 @@ pip install -r requirements.txt
 python scripts/download_data.py
 python -m src.parser data/raw/SSH.log --start-year 2017    # summary only
 python -m src.storage data/raw/SSH.log --start-year 2017   # load into SQLite
+python -m src.geo                                          # add countries
+jupyter nbconvert --to notebook --execute --inplace notebooks/01_exploration.ipynb
 pytest
 ```
 
@@ -98,8 +128,9 @@ reports/figures/  # charts used in this README
 - **pandas** – aggregation
 - **SQLite** – simple, file-based storage, no server needed
 - **matplotlib** – charts
-- **geoip2** – IP → country lookup
-- **pytest** – parser tests
+- **geoip2** – IP → country lookup (reads DB-IP's `.mmdb` format)
+- **Jupyter** – exploratory analysis
+- **pytest** – tests for parser, storage and geolocation
 
 ## Limitations and next steps
 
@@ -109,6 +140,8 @@ reports/figures/  # charts used in this README
 - The fail2ban numbers are a simulation: real attackers may change behavior once they get banned.
 
 ## Acknowledgements
+
+IP geolocation by [DB-IP](https://db-ip.com), licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 
 Dataset from Loghub:
 

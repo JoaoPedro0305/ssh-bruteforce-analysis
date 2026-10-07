@@ -7,7 +7,7 @@ data/processed/*
 !data/sample/*.log
 auth.log*
 
-# GeoLite2 database (MaxMind license forbids redistribution)
+# IP geolocation database (downloaded, too large to commit)
 *.mmdb
 
 # Secrets

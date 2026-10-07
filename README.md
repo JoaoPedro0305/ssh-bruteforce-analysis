@@ -32,6 +32,17 @@ Any server with port 22 open to the internet receives automated login attempts w
 
 <!-- TODO: charts — attempts per day, attempts per hour, top users, top countries -->
 
+## How the parser works
+
+`src/parser.py` turns each authentication attempt into one event (timestamp, IP, port, username, method, success, invalid user). A few things in real `sshd` logs make this less trivial than one regex:
+
+- **One attempt, many lines.** A single failed password also produces `pam_unix`, `Invalid user` and `Disconnecting` lines. Only the `Failed ...` / `Accepted ...` line is counted, so nothing is counted twice.
+- **"message repeated N times".** syslog collapses identical consecutive lines into `message repeated 5 times: [ Failed password ... ]`, meaning 5 attempts *in addition* to the previous line. In this dataset these lines hide **184,011 of 345,245 attempts (53%)**. A parser that ignores them counts less than half of the attacks.
+- **No year in timestamps.** The year starts at `--start-year` and goes up when the month goes backwards (Dec → Jan). The dataset runs from 2017-12-10 to 2018-01-07.
+- **Odd usernames.** Attackers try names with leading spaces (`" 0101"`), so the username is matched up to the `from <ip> port` tail instead of up to the first space.
+
+The parser's total matches an independent `grep`/`awk` count of the raw file exactly (345,245 events).
+
 ## Detection rule
 
 An IP is flagged as brute force when it has more than **N** failed logins within **M** minutes.
@@ -47,6 +58,7 @@ python -m venv .venv
 source .venv/bin/activate        # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 python scripts/download_data.py
+python -m src.parser data/raw/SSH.log --start-year 2017
 pytest
 ```
 

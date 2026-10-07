@@ -10,7 +10,7 @@ Any server with port 22 open to the internet receives automated login attempts w
 
 ## Data
 
-- **Source:** the OpenSSH dataset from [Loghub](https://github.com/logpai/loghub), 655,146 lines (~70 MiB) of `sshd` logs collected over ~28 days from a lab server exposed to the internet.
+- **Source:** the OpenSSH dataset from [Loghub](https://github.com/logpai/loghub), 655,147 lines (~70 MiB) of `sshd` logs collected over ~28 days from a lab server exposed to the internet.
 - **Not committed:** the log is downloaded by `scripts/download_data.py` into `data/raw/`, which is git-ignored. Loghub asks users to link back to the original repository instead of redistributing the data.
 - **Geolocation:** [GeoLite2 Country](https://dev.maxmind.com/geoip/geolite2-free-geolocation-data) by MaxMind (free account required).
 - `data/sample/auth_sample.log` is a small **synthetic** log (documentation IP ranges) used by the tests.
@@ -21,14 +21,19 @@ Any server with port 22 open to the internet receives automated login attempts w
 
 | Metric | Value |
 |---|---|
-| Lines parsed | – |
-| Failed login attempts | – |
-| Unique source IPs | – |
+| Log lines parsed | 655,147 |
+| Authentication attempts | 345,245 |
+| Failed attempts | 345,063 |
+| Successful logins | 182 |
+| Source IPs with failed attempts | 1,010 |
+| Share of attempts from the top 10 IPs | 74.8% |
 | Countries | – |
 | IPs flagged as brute force | – |
 | Attempts blocked by the simulated fail2ban policy | – |
 
-**Top 5 targeted usernames:** –
+**Top 5 targeted usernames:** `root` (94.0%), `admin` (2.3%), `test`, `oracle`, `support`.
+
+Attacks are extremely concentrated: the single most active IP made 25% of all failed attempts (86k in 3 days), and the top 50 IPs made 95%. Blocking a handful of sources removes most of the noise, which is why tools like `fail2ban` work.
 
 <!-- TODO: charts — attempts per day, attempts per hour, top users, top countries -->
 
@@ -42,6 +47,15 @@ Any server with port 22 open to the internet receives automated login attempts w
 - **Odd usernames.** Attackers try names with leading spaces (`" 0101"`), so the username is matched up to the `from <ip> port` tail instead of up to the first space.
 
 The parser's total matches an independent `grep`/`awk` count of the raw file exactly (345,245 events).
+
+## Storage
+
+`src/storage.py` loads the events into SQLite (`data/processed/ssh.db`, table `auth_events`), one row per attempt so `COUNT(*)` is the number of attempts. Each load replaces the table in a single transaction: running it twice gives the same result, and a crash halfway keeps the previous data. Exploration queries are in [`sql/exploration.sql`](sql/exploration.sql).
+
+## Data quality notes
+
+- **Gap from 2017-12-23 10:20 to 2017-12-29 17:24.** No external traffic at all; on Dec 26 `sshd` logs `Server listening on ... port 22` with low PIDs, i.e. the server was restarted, and only an internal address shows up. The server was likely offline or unreachable over the holidays. Daily averages exclude these days.
+- **Legitimate users are not published.** Successful logins belong to real lab users, so their usernames are left out of this README; only usernames tried by attackers are shown.
 
 ## Detection rule
 
@@ -58,7 +72,8 @@ python -m venv .venv
 source .venv/bin/activate        # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 python scripts/download_data.py
-python -m src.parser data/raw/SSH.log --start-year 2017
+python -m src.parser data/raw/SSH.log --start-year 2017    # summary only
+python -m src.storage data/raw/SSH.log --start-year 2017   # load into SQLite
 pytest
 ```
 
@@ -71,6 +86,7 @@ data/
   sample/      # synthetic sample log for tests
 notebooks/     # exploratory analysis
 scripts/       # dataset download
+sql/           # exploration queries
 src/           # parser, storage, detection, simulation, geolocation
 tests/         # pytest
 reports/figures/  # charts used in this README

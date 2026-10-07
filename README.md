@@ -2,8 +2,6 @@
 
 Analysis of 655k real SSH log lines from an internet-facing server: who tries to break in, with which usernames, from where, and how many attacks a `fail2ban` policy would have blocked.
 
-> Status: work in progress
-
 ## The problem
 
 Any server with port 22 open to the internet receives automated login attempts within minutes. This project parses a real `sshd` log, turns it into structured data and answers: how many attacks, when, from where, which users are targeted, and how much a simple blocking rule would actually help.
@@ -26,8 +24,10 @@ Any server with port 22 open to the internet receives automated login attempts w
 | Source IPs with failed attempts | 1,010 |
 | Share of attempts from the top 10 IPs | 74.8% |
 | Countries | 72 |
-| IPs flagged as brute force | – |
-| Attempts blocked by the simulated fail2ban policy | – |
+| IPs flagged as brute force (banned at least once by fail2ban defaults) | 665 of 1,010 |
+| Failed attempts blocked by fail2ban defaults (simulated) | 95.2% |
+| ... with `bantime.increment` | 97.3% |
+| Legitimate logins locked out (either policy) | 1 of 182 |
 
 **Top 5 targeted usernames:** `root` (94.0%), `admin` (2.3%), `test`, `oracle`, `support`.
 
@@ -85,13 +85,52 @@ The parser's total matches an independent `grep`/`awk` count of the raw file exa
 - **Gap from 2017-12-23 10:20 to 2017-12-29 17:24.** No external traffic at all; on Dec 26 `sshd` logs `Server listening on ... port 22` with low PIDs, i.e. the server was restarted, and only an internal address shows up. The server was likely offline or unreachable over the holidays. Daily averages exclude these days.
 - **Legitimate users are not published.** Successful logins belong to real lab users, so their usernames are left out of this README; only usernames tried by attackers are shown.
 
-## Detection rule
-
-An IP is flagged as brute force when it has more than **N** failed logins within **M** minutes.
-
 ## fail2ban simulation
 
-The log is replayed through the same logic `fail2ban` uses: after `maxretry` failures within `findtime`, the IP is banned for `bantime`. Every attempt that happens during a ban counts as blocked. Running the replay with different settings shows how much each policy would have stopped and where stricter rules stop paying off.
+How many attacks would `fail2ban` have stopped, and at what cost? [`src/simulation.py`](src/simulation.py) replays the 345k events in time order through fail2ban's logic: when an IP reaches `maxretry` failures within `findtime`, it is banned for `bantime`.
+
+- An attempt from a banned IP is **blocked** and does not count as a failure (it never reaches sshd).
+- The failure that triggers a ban is not blocked: fail2ban acts after seeing it.
+- A successful login from a banned IP is a **locked-out user**, the cost of the policy.
+- `bantime.increment` doubles the ban each time the same IP is banned again.
+
+**Brute-force detection** uses the same rule: an IP is flagged when fail2ban's defaults (5 failures in 10 minutes) would ban it at least once. That flags **665 of the 1,010** attacking IPs.
+
+21 policies were tested (full results in [`reports/fail2ban_policies.csv`](reports/fail2ban_policies.csv), analysis in [`notebooks/02_fail2ban_simulation.ipynb`](notebooks/02_fail2ban_simulation.ipynb)):
+
+![Attempts reaching sshd per policy](reports/figures/fail2ban_policies.png)
+
+| Policy | Blocked | Reaching sshd | Logins locked out |
+|---|---|---|---|
+| No fail2ban | 0% | 345,063 | 0 |
+| fail2ban default (5 in 10m, ban 10m) | 95.2% | 16,581 | 1 |
+| **Default + `bantime.increment`** | **97.3%** | **9,194** | **1** |
+| Default with a 1-day ban | 97.7% | 7,998 | 3 |
+| Strictest tested (3 in 1h, ban 1d) | 98.5% | 5,129 | 3 |
+
+![Attempts reaching sshd per day](reports/figures/fail2ban_daily.png)
+
+Findings:
+
+1. **The default alone cuts attempts reaching sshd ~20x**, from 345k to 16.6k.
+2. **`bantime.increment` is the best trade-off.** 45% fewer attempts get through than with the default (5x fewer during the Jan 1-4 surge) with no extra locked-out users. Stricter rules gain about one more point and triple the lockouts.
+3. **What gets through is mostly bots coming back.** Under the default, 84% of the attempts that still reach sshd come from IPs that were banned and returned after each 10-minute ban, which is exactly what `bantime.increment` fixes. Only 16% come from "low and slow" IPs that never cross the threshold.
+4. **The one locked-out login** is a user who failed 5 times in 30 minutes before getting the password right.
+
+Recommended `/etc/fail2ban/jail.local`:
+
+```ini
+[sshd]
+enabled = true
+maxretry = 5
+findtime = 10m
+bantime = 10m
+bantime.increment = true
+```
+
+Plus, in `/etc/ssh/sshd_config`, `PermitRootLogin no` and `PasswordAuthentication no`: 94% of attempts target `root`, and with key-only login the remaining password guesses cannot succeed at all.
+
+*Caveat:* the replay assumes attackers behave the same when banned. Many bots give up or move on, so real-world numbers would likely be at least this good.
 
 ## How to run
 
@@ -103,7 +142,8 @@ python scripts/download_data.py
 python -m src.parser data/raw/SSH.log --start-year 2017    # summary only
 python -m src.storage data/raw/SSH.log --start-year 2017   # load into SQLite
 python -m src.geo                                          # add countries
-jupyter nbconvert --to notebook --execute --inplace notebooks/01_exploration.ipynb
+python -m src.simulation                                   # fail2ban policy grid -> reports/fail2ban_policies.csv
+jupyter nbconvert --to notebook --execute --inplace notebooks/*.ipynb
 pytest
 ```
 
@@ -117,9 +157,9 @@ data/
 notebooks/     # exploratory analysis
 scripts/       # dataset download
 sql/           # exploration queries
-src/           # parser, storage, detection, simulation, geolocation
+src/           # parser, storage, geolocation, fail2ban simulation, chart style
 tests/         # pytest
-reports/figures/  # charts used in this README
+reports/       # policy results (CSV) and charts used in this README
 ```
 
 ## Stack
@@ -130,7 +170,7 @@ reports/figures/  # charts used in this README
 - **matplotlib** – charts
 - **geoip2** – IP → country lookup (reads DB-IP's `.mmdb` format)
 - **Jupyter** – exploratory analysis
-- **pytest** – tests for parser, storage and geolocation
+- **pytest** – tests for parser, storage, geolocation and the simulation
 
 ## Limitations and next steps
 

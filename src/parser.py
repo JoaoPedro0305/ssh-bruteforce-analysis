@@ -37,9 +37,9 @@ AUTH_RE = re.compile(
 # to the line logged just before it.
 REPEATED_RE = re.compile(r"^message repeated (?P<count>\d+) times: \[ (?P<inner>.*)\]$")
 
-MONTHS = {m: i for i, m in enumerate(
-    ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"], 1
-)}
+MONTHS = {
+    m: i for i, m in enumerate(["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"], 1)
+}
 
 
 @dataclass(frozen=True)
@@ -50,10 +50,10 @@ class AuthEvent:
     ip: str
     port: int
     user: str
-    method: str          # password, none, publickey, ...
+    method: str  # password, none, publickey, ...
     success: bool
-    invalid_user: bool   # the username does not exist on the server
-    repeated: bool       # expanded from a "message repeated N times" line
+    invalid_user: bool  # the username does not exist on the server
+    repeated: bool  # expanded from a "message repeated N times" line
 
 
 def parse_auth_message(message: str) -> tuple[dict, int] | None:
@@ -128,8 +128,9 @@ def parse_file(path: str | Path, start_year: int) -> Iterator[AuthEvent]:
 def main() -> None:
     cli = argparse.ArgumentParser(description="Parse an sshd log and print a summary.")
     cli.add_argument("path", help="path to the log file")
-    cli.add_argument("--start-year", type=int, default=datetime.now().year,
-                     help="year of the first line (logs have no year)")
+    cli.add_argument(
+        "--start-year", type=int, default=datetime.now().year, help="year of the first line (logs have no year)"
+    )
     args = cli.parse_args()
 
     events = list(parse_file(args.path, args.start_year))

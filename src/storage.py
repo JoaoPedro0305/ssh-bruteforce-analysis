@@ -77,8 +77,7 @@ def load_events(conn: sqlite3.Connection, events: Iterable[AuthEvent]) -> int:
 def main() -> None:
     cli = argparse.ArgumentParser(description="Parse an sshd log and load it into SQLite.")
     cli.add_argument("path", help="path to the log file")
-    cli.add_argument("--start-year", type=int, required=True,
-                     help="year of the first line (logs have no year)")
+    cli.add_argument("--start-year", type=int, required=True, help="year of the first line (logs have no year)")
     cli.add_argument("--db", default=DEFAULT_DB, help=f"SQLite file (default: {DEFAULT_DB})")
     args = cli.parse_args()
 

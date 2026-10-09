@@ -7,8 +7,9 @@ target-version = "py311"
 select = ["E", "F", "W", "B", "UP", "SIM", "S", "I"]
 
 [tool.ruff.lint.per-file-ignores]
-# assert is how pytest checks results; SQL strings in tests are fixed text.
-"tests/**" = ["S101", "S608"]
+# assert is how pytest checks results; SQL strings in tests are fixed text;
+# real sshd log lines are kept whole even when longer than 120 characters.
+"tests/**" = ["S101", "S608", "E501"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

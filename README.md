@@ -178,7 +178,7 @@ reports/       # policy results (CSV) and charts used in this README
 - **pytest** – tests for parser, storage, geolocation and the simulation
 - **ruff** – lint and format check for the code and the notebooks, including bugbear and bandit security rules
 - **GitHub Actions** – lint and tests on every push and pull request, on Python 3.11, 3.12 and 3.13
-- **Dependabot** – weekly pull requests for new versions of the pinned dependencies and GitHub Actions
+- **Dependabot** – monthly pull requests for new versions of the pinned dependencies and GitHub Actions
 
 ## Limitations and next steps
 

@@ -69,13 +69,13 @@ class IpState:
 @dataclass
 class Result:
     policy: Policy
-    failed: int = 0             # failed attempts in the log
-    blocked: int = 0            # of those, dropped by a ban
-    successes: int = 0          # successful logins in the log
-    locked_out: int = 0         # of those, dropped by a ban
+    failed: int = 0  # failed attempts in the log
+    blocked: int = 0  # of those, dropped by a ban
+    successes: int = 0  # successful logins in the log
+    locked_out: int = 0  # of those, dropped by a ban
     bans: int = 0
     banned_ips: set = field(default_factory=set)
-    decisions: list[bool] | None = None   # per event: True if dropped by a ban (only with record=True)
+    decisions: list[bool] | None = None  # per event: True if dropped by a ban (only with record=True)
 
     @property
     def blocked_share(self) -> float:
@@ -103,8 +103,9 @@ class Result:
         }
 
 
-def simulate(events: Iterable[tuple[datetime, str, bool]], policy: Policy = DEFAULT_POLICY,
-             record: bool = False) -> Result:
+def simulate(
+    events: Iterable[tuple[datetime, str, bool]], policy: Policy = DEFAULT_POLICY, record: bool = False
+) -> Result:
     """events: (timestamp, ip, success) sorted by timestamp.
 
     With record=True, result.decisions holds one bool per event (True = dropped by a ban).
@@ -176,8 +177,10 @@ def main() -> None:
 
     print(f"{'policy':<40} {'blocked':>8} {'reached sshd':>13} {'banned IPs':>11} {'locked out':>11}")
     for r in results:
-        print(f"{r.policy.name:<40} {r.blocked_share:>8.1%} {r.reached_sshd:>13,} "
-              f"{len(r.banned_ips):>11,} {r.locked_out:>8}/{r.successes}")
+        print(
+            f"{r.policy.name:<40} {r.blocked_share:>8.1%} {r.reached_sshd:>13,} "
+            f"{len(r.banned_ips):>11,} {r.locked_out:>8}/{r.successes}"
+        )
 
     Path(args.csv).parent.mkdir(parents=True, exist_ok=True)
     with open(args.csv, "w", newline="", encoding="utf-8") as f:

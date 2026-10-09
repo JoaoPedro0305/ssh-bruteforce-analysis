@@ -56,7 +56,6 @@ def test_failed_load_keeps_previous_data(conn):
 def test_timestamps_work_with_sqlite_date_functions(conn):
     load_events(conn, parse_file(SAMPLE, 2026))
     hours = conn.execute(
-        "SELECT strftime('%H', timestamp) AS h, COUNT(*) FROM auth_events "
-        "WHERE success = 0 GROUP BY h ORDER BY h"
+        "SELECT strftime('%H', timestamp) AS h, COUNT(*) FROM auth_events WHERE success = 0 GROUP BY h ORDER BY h"
     ).fetchall()
     assert hours == [("03", 9), ("05", 2), ("14", 1)]

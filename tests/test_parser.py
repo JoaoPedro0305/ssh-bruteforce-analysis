@@ -27,25 +27,33 @@ def test_failed_password_valid_user():
 
 
 def test_failed_password_invalid_user():
-    e = parse_one("Dec 10 06:55:48 LabSZ sshd[24200]: Failed password for invalid user webmaster from 173.234.31.186 port 38926 ssh2")
+    e = parse_one(
+        "Dec 10 06:55:48 LabSZ sshd[24200]: Failed password for invalid user webmaster from 173.234.31.186 port 38926 ssh2"
+    )
     assert e.user == "webmaster"
     assert e.invalid_user is True
 
 
 def test_username_with_leading_space_is_kept():
-    e = parse_one("Dec 10 08:24:35 LabSZ sshd[24361]: Failed password for invalid user  0101 from 5.188.10.180 port 36279 ssh2")
+    e = parse_one(
+        "Dec 10 08:24:35 LabSZ sshd[24361]: Failed password for invalid user  0101 from 5.188.10.180 port 36279 ssh2"
+    )
     assert e.user == " 0101"
 
 
 def test_accepted_with_key_fingerprint():
-    e = parse_one("Oct  7 09:15:44 vm sshd[11002]: Accepted publickey for azureuser from 192.0.2.10 port 60001 ssh2: RSA SHA256:abc")
+    e = parse_one(
+        "Oct  7 09:15:44 vm sshd[11002]: Accepted publickey for azureuser from 192.0.2.10 port 60001 ssh2: RSA SHA256:abc"
+    )
     assert e.success is True
     assert e.method == "publickey"
     assert e.user == "azureuser"
 
 
 def test_failed_none_method():
-    e = parse_one("Dec 10 08:24:40 LabSZ sshd[24363]: Failed none for invalid user admin from 5.188.10.180 port 49811 ssh2")
+    e = parse_one(
+        "Dec 10 08:24:40 LabSZ sshd[24363]: Failed none for invalid user admin from 5.188.10.180 port 49811 ssh2"
+    )
     assert e.method == "none"
 
 

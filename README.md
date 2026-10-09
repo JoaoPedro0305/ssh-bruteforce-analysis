@@ -139,7 +139,7 @@ Plus, in `/etc/ssh/sshd_config`, `PermitRootLogin no` and `PasswordAuthenticatio
 ```bash
 python -m venv .venv
 source .venv/bin/activate        # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
+pip install -r requirements-dev.txt -r requirements-notebooks.txt
 python scripts/download_data.py
 python -m src.parser data/raw/SSH.log --start-year 2017    # summary only
 python -m src.storage data/raw/SSH.log --start-year 2017   # load into SQLite
@@ -147,7 +147,10 @@ python -m src.geo                                          # add countries
 python -m src.simulation                                   # fail2ban policy grid -> reports/fail2ban_policies.csv
 jupyter nbconvert --to notebook --execute --inplace notebooks/*.ipynb
 pytest
+ruff check . && ruff format --check .
 ```
+
+Dependencies are pinned to exact versions and split by use: `requirements.txt` (the analysis), `requirements-dev.txt` (tests and lint) and `requirements-notebooks.txt` (Jupyter).
 
 ## Project structure
 
@@ -173,7 +176,9 @@ reports/       # policy results (CSV) and charts used in this README
 - **geoip2** – IP → country lookup (reads DB-IP's `.mmdb` format)
 - **Jupyter** – exploratory analysis
 - **pytest** – tests for parser, storage, geolocation and the simulation
-- **GitHub Actions** – runs the tests on every push, on Python 3.11, 3.12 and 3.13
+- **ruff** – lint and format check for the code and the notebooks, including bugbear and bandit security rules
+- **GitHub Actions** – lint and tests on every push and pull request, on Python 3.11, 3.12 and 3.13
+- **Dependabot** – weekly pull requests for new versions of the pinned dependencies and GitHub Actions
 
 ## Limitations and next steps
 

@@ -7,6 +7,25 @@ on:
   workflow_dispatch:
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      # Same ruff version as requirements-dev.txt, without installing everything else.
+      - name: Install ruff
+        run: pip install "$(grep '^ruff==' requirements-dev.txt)"
+
+      - name: Lint (code and notebooks)
+        run: ruff check --output-format=github .
+
+      - name: Check formatting
+        run: ruff format --check .
+
   pytest:
     runs-on: ubuntu-latest
     strategy:
@@ -23,7 +42,7 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: pip install -r requirements-dev.txt
 
       # Tests use data/sample/auth_sample.log and a fake geolocation reader,
       # so no dataset download is needed here.

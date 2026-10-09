@@ -30,8 +30,9 @@ GEO_FILE = RAW_DIR / "dbip-country-lite.mmdb"
 def download(url: str, dest: Path) -> None:
     print(f"Downloading {url} ...")
     # Some hosts (db-ip.com) reject Python's default User-Agent with 403.
-    request = urllib.request.Request(url, headers={"User-Agent": "ssh-bruteforce-analysis/1.0"})
-    with urllib.request.urlopen(request) as response, dest.open("wb") as f:
+    # url is always one of the https constants defined in this module, never user input.
+    request = urllib.request.Request(url, headers={"User-Agent": "ssh-bruteforce-analysis/1.0"})  # noqa: S310
+    with urllib.request.urlopen(request) as response, dest.open("wb") as f:  # noqa: S310
         shutil.copyfileobj(response, f)
     print(f"Saved {dest.name} ({dest.stat().st_size / 1_048_576:.1f} MiB)")
 

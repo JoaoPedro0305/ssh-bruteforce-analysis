@@ -1,5 +1,5 @@
 # Exact versions so every environment is the same.
 # Dependabot opens a pull request when a new version is out.
-pandas==3.0.6
+pandas==3.1.0
 matplotlib==3.11.2
 geoip2==5.3.0
